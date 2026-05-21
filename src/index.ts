@@ -16,6 +16,8 @@ import { errorMiddleware, notFoundMiddleware } from './middlewares/error.middlew
  
 const app = express()
 const PORT = process.env.PORT || 3000
+console.log('All env keys:', Object.keys(process.env))
+console.log('DATABASE_URL:', process.env.DATABASE_URL?.substring(0, 20))
 console.log('TEST_VAR:', process.env.TEST_VAR)
 console.log('All env keys:', Object.keys(process.env).filter(k => !k.startsWith('npm')))
 app.use(helmet()) 
