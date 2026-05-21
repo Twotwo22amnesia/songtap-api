@@ -2,13 +2,26 @@ import OpenAI from 'openai'
 import * as fs from 'fs'
 import * as path from 'path'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+let _openai: OpenAI | null = null
+
+const getOpenAI = () => {
+  if (!_openai) {
+    const key = process.env.OPENAI_API_KEY
+    if (!key) {
+      // si no hay key, retornar null sin crashear
+      return null
+    }
+    _openai = new OpenAI({ apiKey: key })
+  }
+  return _openai
+}
 
 export const transcribeAudio = async (audioBuffer: Buffer, filename: string): Promise<string> => {
-  // guardar temporalmente el archivo
+  const openai = getOpenAI()
+  if (!openai) return '' // sin OpenAI, retornar vacío
+
   const tempPath = path.join(__dirname, '../../temp', filename)
   
-  // crear carpeta temp si no existe
   if (!fs.existsSync(path.join(__dirname, '../../temp'))) {
     fs.mkdirSync(path.join(__dirname, '../../temp'), { recursive: true })
   }
@@ -20,12 +33,10 @@ export const transcribeAudio = async (audioBuffer: Buffer, filename: string): Pr
       file: fs.createReadStream(tempPath),
       model: 'whisper-1',
       language: 'es',
-      prompt: 'El usuario está cantando, tarareando o diciendo el nombre de una canción en español o inglés.',
+      prompt: 'El usuario está cantando, tarareando o diciendo el nombre de una canción.',
     })
-
     return transcription.text
   } finally {
-    // limpiar archivo temporal
     if (fs.existsSync(tempPath)) {
       fs.unlinkSync(tempPath)
     }
@@ -49,25 +60,18 @@ export const validateResponseWithText = (
   const title = normalize(songTitle)
   const artist = normalize(songArtist)
 
-  // coincidencia exacta con título
   if (trans.includes(title) || title.includes(trans)) {
     return { score: 100, matched: 'title_exact' }
   }
-
-  // coincidencia con artista
   if (trans.includes(artist) || artist.includes(trans)) {
     return { score: 80, matched: 'artist' }
   }
-
-  // coincidencia parcial — palabras clave del título
   const titleWords = title.split(' ').filter(w => w.length > 3)
   const matchedWords = titleWords.filter(w => trans.includes(w))
   if (matchedWords.length > 0) {
     const score = Math.round((matchedWords.length / titleWords.length) * 90)
     return { score, matched: 'partial_title' }
   }
-
-  // coincidencia con letra si está disponible
   if (lyrics) {
     const lyricsNorm = normalize(lyrics)
     const transWords = trans.split(' ').filter(w => w.length > 3)
@@ -76,6 +80,5 @@ export const validateResponseWithText = (
       return { score: 70, matched: 'lyrics' }
     }
   }
-
   return { score: 0, matched: 'none' }
 }
