@@ -1,14 +1,21 @@
 import { AccessToken, RoomServiceClient } from 'livekit-server-sdk'
 
-const livekitUrl = process.env.LIVEKIT_URL!
-const apiKey = process.env.LIVEKIT_API_KEY!
-const apiSecret = process.env.LIVEKIT_API_SECRET!
+const getLivekitUrl = () => process.env.LIVEKIT_URL!
+const getApiKey = () => process.env.LIVEKIT_API_KEY!
+const getApiSecret = () => process.env.LIVEKIT_API_SECRET!
 
-const roomService = new RoomServiceClient(
-  livekitUrl.replace('wss://', 'https://'),
-  apiKey,
-  apiSecret
-)
+let _roomService: RoomServiceClient | null = null
+
+const getRoomService = () => {
+  if (!_roomService) {
+    _roomService = new RoomServiceClient(
+      getLivekitUrl().replace('wss://', 'https://'),
+      getApiKey(),
+      getApiSecret()
+    )
+  }
+  return _roomService
+}
 
 export type VoiceRole = 'dj' | 'player' | 'spectator'
 
@@ -19,7 +26,7 @@ export const createVoiceToken = async (
   nickname: string,
   role: VoiceRole
 ) => {
-  const token = new AccessToken(apiKey, apiSecret, {
+  const token = new AccessToken(getApiKey(), getApiSecret(), {
     identity: participantId,
     name: nickname,
     ttl: 3600, // 1 hora
@@ -35,7 +42,7 @@ export const createVoiceToken = async (
 
   return {
     token: await token.toJwt(),
-    url: livekitUrl,
+    url: getLivekitUrl(),
     room: `voice:${roomCode}`,
   }
 }
@@ -43,7 +50,7 @@ export const createVoiceToken = async (
 // ── Crear sala de voz ────────────────────────────────────────────────────────
 export const createVoiceRoom = async (roomCode: string) => {
   try {
-    const room = await roomService.createRoom({
+    const room = await getRoomService().createRoom({
       name: `voice:${roomCode}`,
       emptyTimeout: 300,    // se elimina a los 5 min sin participantes
       maxParticipants: 25,
@@ -62,7 +69,7 @@ export const muteParticipant = async (
   muted: boolean
 ) => {
   try {
-    const participants = await roomService.listParticipants(`voice:${roomCode}`)
+    const participants = await getRoomService().listParticipants(`voice:${roomCode}`)
     const participant = participants.find(p => p.identity === participantId)
 
     if (!participant) return
@@ -70,7 +77,7 @@ export const muteParticipant = async (
     // mutear todas las tracks de audio del participante
     for (const track of participant.tracks) {
       if (track.type === 0) { // 0 = audio
-        await roomService.mutePublishedTrack(
+        await getRoomService().mutePublishedTrack(
           `voice:${roomCode}`,
           participantId,
           track.sid,
@@ -86,11 +93,11 @@ export const muteParticipant = async (
 // ── Abrir voz para todos (entre rondas) ─────────────────────────────────────
 export const openVoiceForAll = async (roomCode: string) => {
   try {
-    const participants = await roomService.listParticipants(`voice:${roomCode}`)
+    const participants = await getRoomService().listParticipants(`voice:${roomCode}`)
     for (const participant of participants) {
       for (const track of participant.tracks) {
         if (track.type === 0) {
-          await roomService.mutePublishedTrack(
+          await getRoomService().mutePublishedTrack(
             `voice:${roomCode}`,
             participant.identity,
             track.sid,
@@ -110,12 +117,12 @@ export const openVoiceForPlayer = async (
   activeParticipantId: string
 ) => {
   try {
-    const participants = await roomService.listParticipants(`voice:${roomCode}`)
+    const participants = await getRoomService().listParticipants(`voice:${roomCode}`)
     for (const participant of participants) {
       const shouldMute = participant.identity !== activeParticipantId
       for (const track of participant.tracks) {
         if (track.type === 0) {
-          await roomService.mutePublishedTrack(
+          await getRoomService().mutePublishedTrack(
             `voice:${roomCode}`,
             participant.identity,
             track.sid,
@@ -132,7 +139,7 @@ export const openVoiceForPlayer = async (
 // ── Listar participantes en sala de voz ──────────────────────────────────────
 export const listVoiceParticipants = async (roomCode: string) => {
   try {
-    const participants = await roomService.listParticipants(`voice:${roomCode}`)
+    const participants = await getRoomService().listParticipants(`voice:${roomCode}`)
     return participants.map(p => ({
       identity: p.identity,
       name: p.name,
