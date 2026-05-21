@@ -16,7 +16,8 @@ import { errorMiddleware, notFoundMiddleware } from './middlewares/error.middlew
  
 const app = express()
 const PORT = process.env.PORT || 3000
-
+console.log('TEST_VAR:', process.env.TEST_VAR)
+console.log('All env keys:', Object.keys(process.env).filter(k => !k.startsWith('npm')))
 app.use(helmet()) 
 app.use((req, res, next) => {
   res.setHeader('ngrok-skip-browser-warning', 'true')
