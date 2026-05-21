@@ -1,24 +1,31 @@
 import Ably from 'ably'
 
-const client = new Ably.Rest(process.env.ABLY_API_KEY!)
+let _client: Ably.Rest | null = null
 
-// ── Publicar evento a un canal de sala ───────────────────────────────────────
+const getClient = () => {
+  if (!_client) {
+    const key = process.env.ABLY_API_KEY
+    if (!key) throw new Error('ABLY_API_KEY no configurada')
+    _client = new Ably.Rest(key)
+  }
+  return _client
+}
+
 export const publish = async (roomCode: string, event: string, data: any) => {
-  const channel = client.channels.get(`room:${roomCode}`)
+  const channel = getClient().channels.get(`room:${roomCode}`)
   await channel.publish(event, data)
 }
 
-// ── Generar token para el cliente (frontend) ─────────────────────────────────
 export const createToken = async (clientId: string) => {
-  const tokenRequest = await client.auth.createTokenRequest({
+  const tokenRequest = await getClient().auth.createTokenRequest({
     clientId,
     capability: { '*': ['subscribe', 'publish', 'presence'] },
-    ttl: 3600000, // 1 hora
+    ttl: 3600000,
   })
   return tokenRequest
 }
 
-// ── Eventos del juego ────────────────────────────────────────────────────────
+// ... resto de las funciones usan getClient() en vez de client
 export const emitPlayerJoined = async (roomCode: string, player: {
   id: number
   nickname: string
@@ -60,7 +67,7 @@ export const emitRoundAdvanced = async (roomCode: string, data: {
 export const emitTrackSelected = async (roomCode: string, data: {
   mode: 'presencial' | 'remoto' | 'ai_dj'
   hintSeconds: number
-  previewUrl?: string
+  previewUrl?: string | null
   startAt?: number
 }) => {
   await publish(roomCode, 'TRACK_SELECTED', data)
@@ -71,6 +78,7 @@ export const emitTrackRevealed = async (roomCode: string, data: {
   artist: string
   albumArt: string
   year: string
+  previewUrl?: string
 }) => {
   await publish(roomCode, 'TRACK_REVEALED', data)
 }
