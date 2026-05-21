@@ -6,7 +6,7 @@ export const getVoiceToken = async (req: AuthRequest, res: Response) => {
   try {
     const { roomCode, playerId, nickname, role } = req.body
 
-    if (!roomCode || !playerId || !nickname) {
+    if (!roomCode || !playerId === undefined || !nickname) {
       res.status(400).json({ error: 'roomCode, playerId y nickname son requeridos' })
       return
     }

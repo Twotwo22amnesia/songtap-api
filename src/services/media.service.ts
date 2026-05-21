@@ -43,16 +43,30 @@ export const searchDeezer = async (query: string, limit: number = 10) => {
   const response = await axios.get(`${DEEZER_API}/search`, {
     params: { q: query, limit },
   })
+ 
+  let spotifyTracks: any[] = []
+  try {
+    spotifyTracks = await searchTracks(query, limit)
+  } catch { }
 
-  return response.data.data.map((track: any) => ({
-    deezerId: track.id,
-    title: track.title,
-    artist: track.artist.name,
-    album: track.album.title,
-    previewUrl: track.preview,      // siempre disponible, 30s MP3
-    albumArt: track.album.cover_xl,
-    duration: track.duration,
-  }))
+  return response.data.data.map((track: any) => { 
+    const spotifyMatch = spotifyTracks.find((st: any) =>
+      st.title?.toLowerCase().includes(track.title.toLowerCase()) ||
+      track.title.toLowerCase().includes(st.title?.toLowerCase())
+    )
+
+    return {
+      deezerId: track.id,
+      title: track.title,
+      artist: track.artist.name,
+      album: track.album.title,
+      previewUrl: track.preview,
+      albumArt: track.album.cover_xl,
+      duration: track.duration,
+      spotifyId: spotifyMatch?.id || null,
+      durationMs: spotifyMatch?.durationMs || track.duration * 1000,
+    }
+  })
 }
 
 export const getPreviewUrl = async (

@@ -60,8 +60,8 @@ export const emitRoundAdvanced = async (roomCode: string, data: {
 export const emitTrackSelected = async (roomCode: string, data: {
   mode: 'presencial' | 'remoto' | 'ai_dj'
   hintSeconds: number
-  previewUrl?: string   // solo remoto y ai_dj
-  // título y artista se revelan después
+  previewUrl?: string
+  startAt?: number
 }) => {
   await publish(roomCode, 'TRACK_SELECTED', data)
 }

@@ -11,6 +11,7 @@ import buzzerRoutes from './routes/buzzer.routes'
 import mediaRoutes from './routes/media.routes'
 import voiceRoutes from './routes/voice.routes'
 import aiRoutes from './routes/ai.routes'
+import spotifyRoutes from './routes/spotify.routes'
 import { errorMiddleware, notFoundMiddleware } from './middlewares/error.middleware'
 
 
@@ -19,8 +20,24 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3000
 
-app.use(helmet())
-app.use(cors())
+app.use(helmet()) 
+app.use((req, res, next) => {
+  res.setHeader('ngrok-skip-browser-warning', 'true')
+  next()
+})
+app.use(cors({
+  origin: [
+    'http://localhost:8081',
+    'http://127.0.0.1:8081',
+    'http://localhost:3000',
+    'http://192.168.18.152:8081',
+    'https://eenapmi-anonymous-8081.exp.direct',
+    'https://removing-compactly-flogging.ngrok-free.dev',
+    /\.exp\.direct$/,
+    /\.ngrok-free\.dev$/,
+  ],
+  credentials: true,
+}))
 app.use(express.json())
 app.use('/api/auth', authRoutes) 
 app.use('/api/game', gameRoutes)
@@ -28,6 +45,7 @@ app.use('/api/buzzer', buzzerRoutes)
 app.use('/api/media', mediaRoutes)
 app.use('/api/voice', voiceRoutes)
 app.use('/api/ai', aiRoutes)
+app.use('/api/spotify', spotifyRoutes)
 app.use(notFoundMiddleware)
 app.use(errorMiddleware)
 
