@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
-import dotenv from 'dotenv'
+// import dotenv from 'dotenv'
 import { AppDataSource } from './config/database'
 import { redis } from './config/redis'
 import authRoutes from './routes/auth.routes'
@@ -13,11 +13,7 @@ import voiceRoutes from './routes/voice.routes'
 import aiRoutes from './routes/ai.routes'
 import spotifyRoutes from './routes/spotify.routes'
 import { errorMiddleware, notFoundMiddleware } from './middlewares/error.middleware'
-
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config()
-}
-
+ 
 const app = express()
 const PORT = process.env.PORT || 3000
 

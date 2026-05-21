@@ -1,13 +1,11 @@
 import { DataSource } from 'typeorm'
-import dotenv from 'dotenv'
+// import dotenv from 'dotenv'
 import { User } from '../entities/User'
 import { Game } from '../entities/Game'
 import { Player } from '../entities/Player'
 import { Score } from '../entities/Score'
 
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config()
-}
+ 
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
