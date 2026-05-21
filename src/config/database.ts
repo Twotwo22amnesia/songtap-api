@@ -5,7 +5,9 @@ import { Game } from '../entities/Game'
 import { Player } from '../entities/Player'
 import { Score } from '../entities/Score'
 
-dotenv.config()
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
 
 export const AppDataSource = new DataSource({
   type: 'postgres',

@@ -14,8 +14,9 @@ import aiRoutes from './routes/ai.routes'
 import spotifyRoutes from './routes/spotify.routes'
 import { errorMiddleware, notFoundMiddleware } from './middlewares/error.middleware'
 
-
-dotenv.config()
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -55,6 +56,8 @@ app.get('/health', (req, res) => {
 
 async function bootstrap() {
   try {
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
+    console.log('NODE_ENV:', process.env.NODE_ENV)
     await AppDataSource.initialize()
     console.log('✅ PostgreSQL conectado')
 
