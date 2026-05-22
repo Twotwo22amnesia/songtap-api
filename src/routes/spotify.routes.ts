@@ -44,8 +44,14 @@ router.get('/callback', async (req: any, res) => {
     if (state) {
       try {
         const origin = Buffer.from(state as string, 'base64').toString()
-        if (origin.includes('exp.direct') || origin.includes('ngrok')) {
-          frontUrl = origin.replace(/\/$/, '') // quitar slash final
+        // aceptar cualquier origen https conocido
+        if (
+          origin.includes('exp.direct') ||
+          origin.includes('ngrok') ||
+          origin.includes('vercel.app') ||
+          origin.includes('onrender.com')
+        ) {
+          frontUrl = origin.replace(/\/$/, '')
         }
       } catch {}
     }
@@ -84,51 +90,7 @@ router.get('/callback', async (req: any, res) => {
   }
 })
 // Callback GET — Spotify redirige aquí
-router.get('/callback', async (req: any, res) => {
-  try {
-    const { code, error } = req.query
-
-    if (error || !code) {
-      return res.redirect('https://eenapmi-anonymous-8081.exp.direct/spotify-callback?error=denied')
-    }
-
-    const credentials = Buffer.from(
-      `${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`
-    ).toString('base64')
-
-    const response = await axios.post(
-      'https://accounts.spotify.com/api/token',
-      new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: code as string,
-        redirect_uri: SPOTIFY_REDIRECT_URI,
-      }),
-      {
-        headers: {
-          Authorization: `Basic ${credentials}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    )
-
-    const { access_token, refresh_token } = response.data
-
-    // detectar si viene del tunnel o local
-    const referer = req.headers.referer || ''
-    const isTunnel = referer.includes('exp.direct') || referer.includes('ngrok')
-    
-    const frontUrl = isTunnel
-      ? 'https://eenapmi-anonymous-8081.exp.direct'
-      : 'http://127.0.0.1:8081'
-
-    res.redirect(
-      `${frontUrl}/spotify-callback?access_token=${access_token}&refresh_token=${refresh_token}`
-    )
-  } catch (error: any) {
-    console.error('Spotify callback error:', error.response?.data || error.message)
-    res.redirect('http://127.0.0.1:8081/spotify-callback?error=failed')
-  }
-})
+ 
 // Refresh token
 router.post('/refresh', authMiddleware, async (req: any, res) => {
   try {
