@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only -r reflect-metadata src/index.ts",
-    "build": "tsc",
+    "build": "tsc --noEmitOnError false",
     "start": "node -r reflect-metadata dist/index.js"
   },
   "keywords": [],
